@@ -1,0 +1,103 @@
+<launch>
+
+
+    <!-- ================================================================ -->
+    <!-- ================================================================ -->
+
+    <!-- DATASET TO READ -->
+    <arg name="len_sequence"        default="-1" />
+
+    <!-- INITIAL GUESS FOR SENSOR EXTRINSICS -->
+    <arg name="pos_offset_mu"   default="0.000" />        <!-- [meter]  -->
+    <arg name="pos_offset_sd"   default="0.000" />        <!-- [meter]  -->
+    <arg name="ori_offset_mu"   default="00" />           <!-- [degree] -->
+    <arg name="ori_offset_sd"   default="00" />           <!-- [degree] -->
+    <arg name="gyroscope_misalignment"    default="0" /> <!-- [degree] -->
+    
+    <!-- IMU PROPERTY -->
+    <arg name="freq_imu"    default="100" />
+    <arg name="num_imus"        default="2" />
+
+    <!-- SHOWING CALIBRATION STATUS -->
+    <arg name="show_report"         default="false" />
+    <arg name="show_timer"          default="false" />
+    <arg name="show_covariance"     default="false" />
+
+    <!-- EXPORTING CALIBRATION RESULTS -->
+    <arg name="csv_filepath"   default="/home/jlee/" />
+    <arg name="csv_filename"   default="test.csv" />
+
+    <!-- FOR SCHOPP -->
+    <arg name="accel_transition"   default="1e2" />      <!-- extent of accelerational transition  -->
+    <arg name="alpha_transition"   default="1e2" />      <!-- extent of angular-accel. transition  -->
+
+    <!-- SEED FOR RANDOMIZATION -->
+    <arg name="seed"        default="3" />
+
+    <!-- ================================================================ -->
+    <!-- ================================================================ -->
+
+
+    <!-- MASTER NODE! -->
+    <node name="run_record" pkg="imucalib" type="run_record" output="screen" clear_params="true" required="true">
+
+        <!-- =============================================== -->
+        <!-- BELOW ARE PARAMETERS MANUALLY FED IN -->
+        <!-- =============================================== -->
+        <!-- sensor noise values -->
+        <param name="accelerometer_noise_density"  type="double"   value="1.13e-01" /> <!-- 2.0000e-03 -->
+        <param name="accelerometer_random_walk"    type="double"   value="2.54e-03" /> <!-- 3.0000e-03 -->
+        <param name="gyroscope_noise_density"      type="double"   value="3.74e-03" /> <!-- 1.6968e-04 -->
+        <param name="gyroscope_random_walk"        type="double"   value="7.39e-05" /> <!-- 1.9393e-05 -->
+        
+        <!-- imu extrinsics -->
+        <!-- IMU0 required to be indentity matrix -->
+        <rosparam param="T_I0toI">  <!-- same as T_I0toB -->
+            [
+             1, 0, 0,  0.00000,
+             0, 1, 0,  0.00000,
+             0, 0, 1,  0.00000,
+             0, 0, 0,  1.00000
+            ]
+        </rosparam>
+        <rosparam param="T_I1toI">
+            [
+             1, 0, 0,  0.10000,
+             0, 1, 0,  0.10000,
+             0, 0, 1,  0.00000,
+             0, 0, 0,  1.00000
+            ]
+        </rosparam>
+
+        <!-- world/filter parameters (required only for Schopped et al.) -->
+        <rosparam param="gravity">[0.0,0.0,9.81]</rosparam>
+
+        <!-- =============================================== -->
+        <!-- BELOW ARE PARAMETERS AUTOMATICALLY FED BY THE GIVEN ARGUMENTS -->
+        <!-- =============================================== -->
+        
+        <param name="len_sequence"    type="int"    value="$(arg len_sequence)" />
+
+        <param name="pos_offset_mu"    type="double"    value="$(arg pos_offset_mu)" />
+        <param name="pos_offset_sd"    type="double"    value="$(arg pos_offset_sd)" />
+        <param name="ori_offset_mu"    type="double"    value="$(arg ori_offset_mu)" />
+        <param name="ori_offset_sd"    type="double"    value="$(arg ori_offset_sd)" />
+        <param name="gyroscope_misalignment"    type="int"      value="$(arg gyroscope_misalignment)" />
+        
+        <param name="sim_freq_imu"           type="int"    value="$(arg freq_imu)" />
+        <param name="num_imus"    type="int"    value="$(arg num_imus)" />
+        
+        <param name="show_report"         type="bool"   value="$(arg show_report)" />
+        <param name="show_timer"          type="bool"   value="$(arg show_timer)" />
+        <param name="show_covariance"     type="bool"   value="$(arg show_covariance)" />
+        
+        <param name="filepath_csv"      type="string" value="$(arg csv_filepath)" />
+        <param name="filename_csv"      type="string" value="$(arg csv_filename)" />
+
+        <param name="accel_transition"    type="double"    value="$(arg accel_transition)" />
+        <param name="alpha_transition"    type="double"    value="$(arg alpha_transition)" />
+
+        <param name="sim_seed_calibration"   type="int"    value="$(arg seed)" />
+    </node>
+
+</launch>
