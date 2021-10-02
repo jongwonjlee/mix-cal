@@ -3,3 +3,6 @@ launch/run_sim*.launch
 src/core/
 src/sim/
 src/run_sim*.cpp
+
+scripts/
+dataset/

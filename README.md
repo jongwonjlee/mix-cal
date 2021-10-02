@@ -25,7 +25,13 @@ The program is licensed under the [GNU General Public License v3 (GPL-3)](https:
 }
 ```
 
+## Dataset [[Link](https://uofi.box.com/s/nemjm0v2q05hmgzg6ewef4iwqpwh1tkd)]
+
+The dataset consists of (1) two IMUs, (2) one camera, and (3) trajectory captured by VICON for ground-truth, under three different perceptual conditions: (1) baseline, (2) ill-lit, and (3) blurry scenes. Collected while the camera heads toward the fiducal marker, this dataset is organized to our framework's performance to [Kalibr](https://github.com/ethz-asl/kalibr), a camera-IMU calibration toolbox widely used.
+
 ## How to execute
+
+**Disclaimer**: The command below shows an example of how to build the program and execute it by `roslaunch`. The details on running it with the aforementioned dataset will be appeared shortly.
 
 ```
 # setup your own workspace
