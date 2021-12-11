@@ -420,7 +420,7 @@ void Estimator::construct_problem(const std::vector<std::map<size_t, Eigen::Vect
     problem.SetParameterBlockConstant(imu_ori.at(0).coeffs().data());
     
     // fix gyroscope axis to be identical to that of imu if not applicable
-    if (params.gyroscope_misalignment == 0) {
+    if (params.gyroscope_misalignment == 0 || params.fix_gyr_mis) {
         for (int n = 0; n < params.num_imus; n ++) problem.SetParameterBlockConstant(gyr_mis.at(n).coeffs().data());
     }
 
