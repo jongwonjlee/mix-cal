@@ -258,6 +258,11 @@ CalibrationOptions parse_ros_nodehandler(ros::NodeHandle &nh) {
     nh.param<double>("ori_offset_mu", params.ori_offset_mu, params.ori_offset_mu);
     nh.param<double>("ori_offset_sd", params.ori_offset_sd, params.ori_offset_sd);
 
+    nh.param<double>("ba_bound", params.ba_bound, params.ba_bound);
+    nh.param<double>("bw_bound", params.bw_bound, params.bw_bound);
+
+    nh.param<int>("fix_gyr_mis", params.fix_gyr_mis, params.fix_gyr_mis);
+
     nh.param<double>("accel_transition", params.accel_transition, params.accel_transition);
     nh.param<double>("alpha_transition", params.alpha_transition, params.alpha_transition);
     

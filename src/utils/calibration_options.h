@@ -133,6 +133,11 @@ struct CalibrationOptions {
     double accel_transition = 0;
     double alpha_transition = 0;
 
+    double ba_bound = 0.5;
+    double bw_bound = 0.5;
+
+    int fix_gyr_mis = 0;
+
     std::string filepath_csv;
     std::string filename_csv;
 

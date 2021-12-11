@@ -12,14 +12,21 @@
     <arg name="pos_offset_sd"   default="0.000" />        <!-- [meter]  -->
     <arg name="ori_offset_mu"   default="00" />           <!-- [degree] -->
     <arg name="ori_offset_sd"   default="00" />           <!-- [degree] -->
-    <arg name="gyroscope_misalignment"    default="0" /> <!-- [degree] -->
+    <arg name="gyr_mis"         default="0" />  <!-- [degree] -->
     
+    <!-- ENABLE GYROSCOPE MISALIGNMENT ESTIMATION -->
+    <arg name="fix_gyr_mis"    default="1" /> <!-- ["yes": 1, "no": 0]  -->
+    
+    <!-- UPPER AND LOWER LIMIT OF SENSOR BIAS -->
+    <arg name="ba_bound"   default="0.50" />
+    <arg name="bw_bound"   default="0.50" />
+
     <!-- IMU PROPERTY -->
     <arg name="freq_imu"    default="100" />
     <arg name="num_imus"        default="2" />
 
     <!-- SHOWING CALIBRATION STATUS -->
-    <arg name="show_report"         default="false" />
+    <arg name="show_report"         default="true" />
     <arg name="show_timer"          default="false" />
     <arg name="show_covariance"     default="false" />
 
@@ -84,6 +91,11 @@
         <param name="ori_offset_sd"    type="double"    value="$(arg ori_offset_sd)" />
         <param name="gyroscope_misalignment"    type="int"      value="$(arg gyroscope_misalignment)" />
         
+        <param name="ba_bound"    type="double"    value="$(arg ba_bound)" />
+        <param name="bw_bound"    type="double"    value="$(arg bw_bound)" />
+
+        <param name="fix_gyr_mis"     type="int"       value="$(arg fix_gyr_mis)" />
+
         <param name="sim_freq_imu"           type="int"    value="$(arg freq_imu)" />
         <param name="num_imus"    type="int"    value="$(arg num_imus)" />
         

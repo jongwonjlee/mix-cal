@@ -85,6 +85,7 @@ public:
                            const std::vector<std::map<size_t, Eigen::Vector3d> >& w_measurements);
     void solve_problem();
     void get_extrinsics(std::map<size_t, Eigen::VectorXd>& imu_extrinsics_estimated);
+    void get_gyr_mis(std::map<size_t, Eigen::Quaterniond>& gyr_mis_estimated);
     void show_results();
 
     // Internal member functions
@@ -116,6 +117,9 @@ Estimator::Estimator(const CalibrationOptions& params, const std::map<size_t, Ei
     // ceres options
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
+    options.max_num_iterations = 200;
+    options.num_threads = 4;
+    options.minimizer_progress_to_stdout = true;
 
     // Initialize imu_pos, imu_ori, and gyr_mis
     for (int n = 0; n < params.num_imus; n ++) {
@@ -190,10 +194,10 @@ void Estimator::construct_problem(const std::vector<std::map<size_t, Eigen::Vect
     for (int t = 0; t < num_data; t ++) {
         for (int n = 0; n < params.num_imus; n ++) {
             for (int i = 0; i < 3; i ++) {
-                problem.SetParameterLowerBound(acc_bias_arr.at(t).at(n).data(), i, -1.0);
-                problem.SetParameterUpperBound(acc_bias_arr.at(t).at(n).data(), i, 1.0);
-                problem.SetParameterLowerBound(gyr_bias_arr.at(t).at(n).data(), i, -0.1);
-                problem.SetParameterUpperBound(gyr_bias_arr.at(t).at(n).data(), i, 0.1);
+                problem.SetParameterLowerBound(acc_bias_arr.at(t).at(n).data(), i, -params.ba_bound);
+                problem.SetParameterUpperBound(acc_bias_arr.at(t).at(n).data(), i, +params.ba_bound);
+                problem.SetParameterLowerBound(gyr_bias_arr.at(t).at(n).data(), i, -params.bw_bound);
+                problem.SetParameterUpperBound(gyr_bias_arr.at(t).at(n).data(), i, +params.bw_bound);
             }
         }
     }
@@ -212,10 +216,10 @@ void Estimator::construct_problem(const std::vector<std::map<size_t, Eigen::Vect
             ceres::CostFunction* cost_gyr = Ours::AngvelResidual::Create(w_measurements.at(t).at(n), w_measurements.at(t).at(0), sqrt_Info_gyr);
 
             // Assign variable (subject to be optimized)
-            problem.AddResidualBlock(cost_acc, new ceres::HuberLoss(sqrt(Cov_a(0,0))), 
+            problem.AddResidualBlock(cost_acc, new ceres::CauchyLoss(1.0), 
                                      imu_pos.at(n).data(), imu_ori.at(n).coeffs().data(), gyr_mis.at(0).coeffs().data(), wd_inI.at(t).data(),
                                      acc_bias_arr.at(t).at(n).data(), gyr_bias_arr.at(t).at(0).data(), acc_bias_arr.at(t).at(0).data());
-            problem.AddResidualBlock(cost_gyr, new ceres::HuberLoss(sqrt(Cov_w(0,0))), 
+            problem.AddResidualBlock(cost_gyr, new ceres::CauchyLoss(1.0), 
                                      imu_ori.at(n).coeffs().data(), gyr_mis.at(n).coeffs().data(), gyr_mis.at(0).coeffs().data(), 
                                      gyr_bias_arr.at(t).at(n).data(), gyr_bias_arr.at(t).at(0).data());
         }
@@ -228,9 +232,9 @@ void Estimator::construct_problem(const std::vector<std::map<size_t, Eigen::Vect
             Eigen::Matrix<double,3,3> sqrt_Info_ab = Eigen::LLT<Eigen::Matrix<double,3,3> >(Cov_ab.inverse()).matrixL().transpose();
             Eigen::Matrix<double,3,3> sqrt_Info_wb = Eigen::LLT<Eigen::Matrix<double,3,3> >(Cov_wb.inverse()).matrixL().transpose();
 
-            problem.AddResidualBlock(Ours::BiasResidual::Create(sqrt_Info_ab), new ceres::HuberLoss(sqrt(Cov_ab(0,0))), 
+            problem.AddResidualBlock(Ours::BiasResidual::Create(sqrt_Info_ab), new ceres::CauchyLoss(1.0), 
                                      acc_bias_arr.at(t).at(n).data(), acc_bias_arr.at(t+1).at(n).data());
-            problem.AddResidualBlock(Ours::BiasResidual::Create(sqrt_Info_wb), new ceres::HuberLoss(sqrt(Cov_wb(0,0))), 
+            problem.AddResidualBlock(Ours::BiasResidual::Create(sqrt_Info_wb), new ceres::CauchyLoss(1.0), 
                                      gyr_bias_arr.at(t).at(n).data(), gyr_bias_arr.at(t+1).at(n).data());
         }
     }
@@ -254,6 +258,7 @@ void Estimator::solve_problem()
     // Record initial and final cost
     initial_cost = summary.initial_cost;
     final_cost = summary.final_cost;
+    summary.FullReport();
         
     toc = std::chrono::high_resolution_clock::now();
 }
@@ -268,6 +273,11 @@ void Estimator::get_extrinsics(std::map<size_t, Eigen::VectorXd>& imu_extrinsics
         imu_eigen.block(4,0,3,1) = imu_pos.at(n);
         imu_extrinsics_estimated.insert({n, imu_eigen});
     }
+}
+
+void Estimator::get_gyr_mis(std::map<size_t, Eigen::Quaterniond>& gyr_mis_estimated)
+{
+    gyr_mis_estimated = gyr_mis;
 }
 
 void Estimator::show_results()
