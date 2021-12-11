@@ -91,6 +91,25 @@ void print_results(const std::map<size_t,Eigen::VectorXd>& imupose_gt,
 }
 
 
+void print_results(const std::map<size_t,Eigen::VectorXd>& imupose_gt, 
+                   const std::map<size_t,Eigen::VectorXd>& imupose_init,
+                   const std::map<size_t,Eigen::VectorXd>& imupose_estm,
+                   const std::map<size_t,Eigen::Quaterniond>& gyr_mis_estm) {
+  // Print all IMU's GT, initial guess, and estimated pose, respectively 
+  printf(" -- IMU EXTRINSICS (GROUND TRUTH): \n");
+  print_imus(imupose_gt);
+  printf(" -- IMU EXTRINSICS (INITIAL)     : \n");
+  print_imus(imupose_init);
+  printf(" -- IMU EXTRINSICS (ESTIMATED)   : \n");
+  print_imus(imupose_estm);
+  printf(" -- GYRO MISALIGNMENT (ESTIMATED): \n");
+  for (const auto & gyr_mis_est : gyr_mis_estm){
+    printf("GYR_MIS_%d:\n", gyr_mis_est.first);
+    printf("%f %f %f %f\n", gyr_mis_est.second.x(), gyr_mis_est.second.y(), gyr_mis_est.second.z(), gyr_mis_est.second.w());
+  }
+}
+
+
 void print_rmse(const std::map<size_t,Eigen::VectorXd>& imupose_gt, 
                   const std::map<size_t,Eigen::VectorXd>& imupose_init,
                   const std::map<size_t,Eigen::VectorXd>& imupose_estm) {
@@ -101,6 +120,37 @@ void print_rmse(const std::map<size_t,Eigen::VectorXd>& imupose_gt,
   printf(" -- AVERAGE POSE RMSE ERROR : \n");
   printf("    TRANSLATION [mm] : %.4f  -->  %.4f\n", rmse_bfore.pos_rmse * 1e3, rmse_after.pos_rmse * 1e3);
   printf("    ROTATION   [deg] : %.4f  -->  %.4f\n", rmse_bfore.ori_rmse, rmse_after.ori_rmse);
+}
+
+
+void print_rmse(const std::map<size_t,Eigen::VectorXd>& imupose_gt, 
+                const std::map<size_t,Eigen::VectorXd>& imupose_init,
+                const std::map<size_t,Eigen::VectorXd>& imupose_estm,
+                const std::map<size_t,Eigen::Matrix3d>& gyr_mis_gt,
+                const std::map<size_t,Eigen::Quaterniond>& gyr_mis_estm) {
+  // Print RMSE averaged over imus in concern
+  extrinsicError rmse_bfore, rmse_after;
+  imu_extrinsics_error(imupose_gt, imupose_init, rmse_bfore);
+  imu_extrinsics_error(imupose_gt, imupose_estm, rmse_after);
+  printf(" -- AVERAGE POSE RMSE ERROR : \n");
+  printf("    TRANSLATION [mm] : %.4f  -->  %.4f\n", rmse_bfore.pos_rmse * 1e3, rmse_after.pos_rmse * 1e3);
+  printf("    ROTATION   [deg] : %.4f  -->  %.4f\n", rmse_bfore.ori_rmse, rmse_after.ori_rmse);
+
+  // Get gyro misalignment RMSE ...
+  std::vector<double> gyr_mis_angle_bfore, gyr_mis_angle_after;
+  
+  for (const auto& R : gyr_mis_gt) {
+    int m = R.first;
+    Eigen::Quaterniond quat_gyr_mis_gt(R.second);
+    gyr_mis_angle_bfore.push_back(abs(Eigen::Quaterniond::Identity().angularDistance(quat_gyr_mis_gt)) * (180/M_PI));
+    gyr_mis_angle_after.push_back(abs(gyr_mis_estm.at(m).angularDistance(quat_gyr_mis_gt)) * (180/M_PI));
+  }
+  
+  // calculate mean and standard deviation
+  double gyr_mis_bfore_mse_sum = std::inner_product(gyr_mis_angle_bfore.begin(), gyr_mis_angle_bfore.end(), gyr_mis_angle_bfore.begin(), 0.0);  // sum[X^2]
+  double gyr_mis_after_mse_sum = std::inner_product(gyr_mis_angle_after.begin(), gyr_mis_angle_after.end(), gyr_mis_angle_after.begin(), 0.0);  // sum[X^2]
+  
+  printf("    GYRO MIS  [deg] : %.4f  -->  %.4f\n", sqrt(gyr_mis_bfore_mse_sum / gyr_mis_gt.size()), sqrt(gyr_mis_after_mse_sum / gyr_mis_gt.size()));
 }
 
 
@@ -143,13 +193,19 @@ void export_errors(const std::string filename,
 
 void export_pose(const std::string filename,
                  const Eigen::VectorXd& imu_extrinsic, 
+                 const std::map<size_t,Eigen::Quaterniond>& gyr_mis,
+                 const bool status,
                  const int consumed_time) {
   // export (1) position of I1 w.r.t. I0 in I0 frame (^{I0}p_{I0}_{I1}) and (2) orientation axis of I1 w.r.t. I0 (^{I0}_{I1}R) as a file
   std::ofstream f;
   if (!file_exists(filename)) {  // if no previous file exists
     f.open(filename, ios_base::out);
     f.clear();
-    f << "p_x p_y p_z q_x q_y q_z q_w" << " " << "ms" << std::endl; // add index
+    f << "p_x p_y p_z q_x q_y q_z q_w ";
+    for (int i=0; i<gyr_mis.size(); i++) {
+      f << "g_x g_y g_z g_w ";
+    }
+    f << "status ms" << std::endl; // add index
     f.close();
   }
 
@@ -169,7 +225,11 @@ void export_pose(const std::string filename,
   f << p_ItoUinI(0) << " " << p_ItoUinI(1) << " " << p_ItoUinI(2) << " ";    // position [m]
   f << q_UtoI.x() << " " << q_UtoI.y() << " " << q_UtoI.z() << " " << q_UtoI.w() << " ";      // orientation [quat]
   
-  f << consumed_time << std::endl;
+  for (int i=0; i<gyr_mis.size(); i++) {
+    f << gyr_mis.at(i).x() << " " << gyr_mis.at(i).y() << " " << gyr_mis.at(i).z() << " " << gyr_mis.at(i).w() << " ";
+  }
+
+  f << status << " " << consumed_time << std::endl;
   f.close();
 
 }

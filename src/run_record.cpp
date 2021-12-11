@@ -78,12 +78,12 @@ int main(int argc, char** argv)
 
     // ##### HERE ADDED BLOCKS END
 
-    // Initialize pose information for accelerometers
+    // Initialize pose information for imus
     std::map<size_t,Eigen::VectorXd> imu_pose_initial = params.imu_extrinsics;
     for (int n = 1; n < params.num_imus; n ++) {
-        Eigen::VectorXd zero_vec(7); zero_vec << 1,0,0,0,0,0,0;
-        imu_pose_initial.at(n) = zero_vec;
-        // add_noise(imu_pose_initial.at(n), params.pos_offset_mu, params.pos_offset_sd, params.ori_offset_mu, params.ori_offset_sd);
+        // Eigen::VectorXd zero_vec(7); zero_vec << 0,0,0,1,0,0,0;
+        // imu_pose_initial.at(n) = zero_vec;
+        add_noise(imu_pose_initial.at(n), params.pos_offset_mu, params.pos_offset_sd, params.ori_offset_mu, params.ori_offset_sd);
     }
 
     // Initialize wd_inB_init, an initial guess for angular acceleration seen by base IMU
@@ -92,6 +92,7 @@ int main(int argc, char** argv)
     
     // Container for pose estimation
     std::map<size_t,Eigen::VectorXd> imu_pose_estimated;
+    std::map<size_t, Eigen::Quaterniond> gyr_mis_estimated;
 
     // Create estimator
     Ours::Estimator estimator(params, imu_pose_initial);
@@ -100,15 +101,16 @@ int main(int argc, char** argv)
     estimator.construct_problem(am_arr, wm_arr);
     estimator.solve_problem();
     estimator.get_extrinsics(imu_pose_estimated);
+    estimator.get_gyr_mis(gyr_mis_estimated);
     estimator.show_results();
     
     // Print all pose estimation result
-    print_results(params.imu_extrinsics, imu_pose_initial, imu_pose_estimated);
+    print_results(params.imu_extrinsics, imu_pose_initial, imu_pose_estimated, gyr_mis_estimated);
 
     // export estimated pose to file
     std::string export_filename = params.filepath_csv + params.filename_csv;
-    int time_count_ms = estimator.print_timer();
-    export_pose(export_filename, imu_pose_estimated.at(1), time_count_ms);
+    std::cout << " -- EXPORT RESULTS AT " << export_filename << "..." << std::endl;
+    export_pose(export_filename, imu_pose_estimated.at(1), gyr_mis_estimated, estimator.get_result(), estimator.print_timer());
     
     // erase A0 pose information
     imu_pose_initial.erase(0);
@@ -116,7 +118,7 @@ int main(int argc, char** argv)
     params.imu_extrinsics.erase(0);
     
     // Print estimation error
-    print_rmse(params.imu_extrinsics, imu_pose_initial, imu_pose_estimated);
+    print_rmse(params.imu_extrinsics, imu_pose_initial, imu_pose_estimated, params.gyr_mis_extrinsics, gyr_mis_estimated);
     
     // Done!
     return EXIT_SUCCESS;
