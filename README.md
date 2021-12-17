@@ -1,4 +1,4 @@
-# Extrinsic calibration of multiple inertial sensors from in-flight data
+# Extrinsic Calibration of Multiple Inertial Sensors from Arbitrary Trajectories
 
 This program serves the extrinsic calibration of multiple 6DOF inertial measurement unit (IMU) with arbitrary measurements. This program, wrapped with [ROS](https://www.ros.org/) as of now, requires the installation of [Ceres Solver](http://ceres-solver.org/). Some code has been adapted from the [OpenVINS](https://docs.openvins.com/), a open-sourced visual-inertial simulator.
 
