@@ -40,7 +40,19 @@ roslaunch imucalib run_record.launch csv_filepath:="${IMU_DATA_PATH}/" csv_filen
 
 ## Credit / Licensing
 
-The program is licensed under the [GNU General Public License v3 (GPL-3)](https://www.gnu.org/licenses/gpl-3.0.txt) inherited from that of [OpenVINS](https://github.com/rpng/open_vins) where some part of it is adapted. If you use code in this program pertaining to [OpenVINS](https://github.com/rpng/open_vins), please cite the following:
+Please cite the paper below for any academic usage:
+
+```
+@article{lee2022extrinsic,
+  title={Extrinsic Calibration of Multiple Inertial Sensors from Arbitrary Trajectories},
+  author={Lee, Jongwon and Hanley, David and Bretl, Timothy},
+  journal={IEEE Robotics and Automation Letters},
+  year={2022},
+  publisher={IEEE}
+}
+```
+
+The program is licensed under the [GNU General Public License v3 (GPL-3)](https://www.gnu.org/licenses/gpl-3.0.txt) inherited from that of [OpenVINS](https://github.com/rpng/open_vins) where some part of it is adapted. If you use code in this program pertaining to [OpenVINS](https://github.com/rpng/open_vins), please also cite the following:
 
 ```
 @Conference{Geneva2020ICRA,
