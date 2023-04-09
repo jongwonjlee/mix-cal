@@ -56,7 +56,7 @@ protected:
     std::map<size_t, Eigen::Matrix3d> Cov_a_arr, Cov_w_arr, Cov_ab_arr, Cov_wb_arr;
 
     // Define local parameterization to optimize quaternion on its own manifold (i.e. q \in R^4 where \norm(q) = 1)
-    ceres::LocalParameterization* quat_loc_parameterization = new ceres::EigenQuaternionParameterization;
+    ceres::Manifold* quat_loc_parameterization = new ceres::EigenQuaternionManifold;
 
     // ceres::Problem object
     ceres::Problem problem;

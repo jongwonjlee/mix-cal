@@ -110,7 +110,7 @@ int main(int argc, char** argv)
     // export estimated pose to file
     std::string export_filename = params.filepath_csv + params.filename_csv;
     std::cout << " -- EXPORT RESULTS AT " << export_filename << "..." << std::endl;
-    export_pose(export_filename, imu_pose_estimated.at(1), gyr_mis_estimated, estimator.get_result(), estimator.print_timer());
+    export_pose(export_filename, imu_pose_estimated.at(1), gyr_mis_estimated, true, estimator.print_timer());
     
     // erase A0 pose information
     imu_pose_initial.erase(0);
