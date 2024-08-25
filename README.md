@@ -40,7 +40,7 @@ roslaunch imucalib run_record.launch csv_filepath:="${IMU_DATA_PATH}/" csv_filen
 
 ## Credit / Licensing
 
-Please cite the paper below for any academic usage:
+Please cite the following papers below for any academic usage:
 
 ```
 @article{lee2022extrinsic,
@@ -49,6 +49,16 @@ Please cite the paper below for any academic usage:
   journal={IEEE Robotics and Automation Letters},
   year={2022},
   publisher={IEEE}
+}
+
+@inproceedings{lee2024efficient,
+  title        = {Efficient Extrinsic Self-Calibration of Multiple IMUs using Measurement Subset Selection},
+  author       = {Lee, Jongwon and Hanley, David and Bretl, Timothy},
+  booktitle    = {IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  year         = {2024},
+  month        = {October},
+  address      = {Abu Dhabi},
+  organization = {IEEE}
 }
 ```
 
